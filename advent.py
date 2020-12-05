@@ -1,6 +1,7 @@
 import itertools
 from typing import List
 from typing import Dict
+from typing import Tuple
 import time
 
 
@@ -9,7 +10,8 @@ class Puzzle:
         1: 'puzzle1.txt',
         2: 'puzzle2.txt',
         3: 'puzzle3.txt',
-        4: 'puzzle4.txt'
+        4: 'puzzle4.txt',
+        5: 'puzzle5.txt'
     }
 
     def __init__(self):
@@ -319,7 +321,89 @@ class FourthPuzzle(Puzzle):
         cls._print_results(4, 2, number_of_valid_passports, (end - start))
 
 
+class FifthPuzzle(Puzzle):
+
+    @classmethod
+    def solve(cls):
+        start = time.time()
+        data = cls._get_data_from_file(cls._FILES[5])
+        seat_positions = []
+        for i in data:
+            row_span = [i for i in range(128)]
+            col_span = [i for i in range(8)]
+            # first find appropriate row
+            for j in range(0, 7):
+                half = len(row_span) // 2
+                if i[j] == 'F':
+                    row_span = row_span[:half]
+                if i[j] == 'B':
+                    row_span = row_span[half:]
+            # Then find appropriate column
+            for j in range(7, 10):
+                half = len(col_span) // 2
+                if i[j] == 'L':
+                    col_span = col_span[:half]
+                if i[j] == 'R':
+                    col_span = col_span[half:]
+            seat_positions.append((row_span[0], col_span[0]))
+
+        # calculate maximum seatID
+
+        seat_ids = []
+        for row, col in seat_positions:
+            seat_ids.append((row * 8) + col)
+
+        end = time.time()
+        cls._first_part(seat_ids, (end - start))
+        cls._second_part(seat_positions, start)
+
+    @classmethod
+    def _first_part(cls, seat_ids: List[int], time_spent: float):
+        cls._print_results(5, 1, max(seat_ids), time_spent)
+
+    @classmethod
+    def _second_part(cls, seat_positions: List[Tuple[int, int]], start: float):
+        sorted_positions = sorted(seat_positions)
+        rows = []
+        for j, _ in sorted_positions:
+            rows.append(j)
+        rows = list(set(rows))
+        first_row = min(rows)
+        last_row = max(rows)
+        row_dict = {i: [] for i in rows}
+        for i, j in sorted_positions:
+            row_dict[i].append(j)
+
+        # We need to find the row that hasn't got all of the columns!
+        our_seat = {
+            'row': 0,
+            'column': 0
+        }
+        missing_seats = 0
+        for i, j in row_dict.items():
+            # We know (because of instructions) that our seat is not in the first or last row, hence we skip it
+            if i == first_row or i == last_row:
+                continue
+            if len(j) != 8:
+                missing_seats += 1
+                if len(j) != 7:
+                    raise Exception('There is more than one column missing - Probably our miscalculation!')
+                our_seat['row'] = i
+                # Now find which column is missing
+                for c in [0, 1, 2, 3, 4, 5, 6, 7]:
+                    if c not in j:
+                        our_seat['column'] = c
+
+        if missing_seats != 1:
+            raise Exception('There is more than one seat missing - Probably our miscalculation')
+
+        our_seat_id = our_seat['row'] * 8 + our_seat['column']
+        end = time.time()
+        cls._print_results(5, 2, our_seat_id, (end - start))
+
+
 FirstPuzzle()
 SecondPuzzle()
 ThirdPuzzle()
 FourthPuzzle()
+FifthPuzzle()
