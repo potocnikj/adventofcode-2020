@@ -4,14 +4,14 @@ from typing import Dict
 from typing import Tuple
 import time
 
-
 class Puzzle:
     _FILES = {
         1: 'puzzle1.txt',
         2: 'puzzle2.txt',
         3: 'puzzle3.txt',
         4: 'puzzle4.txt',
-        5: 'puzzle5.txt'
+        5: 'puzzle5.txt',
+        6: 'puzzle6.txt'
     }
 
     def __init__(self):
@@ -31,6 +31,12 @@ class Puzzle:
             for line in file_in:
                 lines.append(line.replace('\n', ''))
             return lines
+
+    @staticmethod
+    def _get_raw_data_from_file(file: str) -> str:
+        with open(file) as file_in:
+            data = file_in.read()
+        return data
 
     @staticmethod
     def _print_results(puzzle: int, task: int, result, time_spent: float):
@@ -402,8 +408,38 @@ class FifthPuzzle(Puzzle):
         cls._print_results(5, 2, our_seat_id, (end - start))
 
 
+class SixthPuzzle(Puzzle):
+
+    @classmethod
+    def solve(cls):
+        data = cls._get_raw_data_from_file(cls._FILES[6]).split('\n\n')
+        cls._first_part(data)
+        cls._second_part(data)
+
+    @classmethod
+    def _first_part(cls, data: List[str]):
+        start = time.time()
+        result = 0
+        for group in data:
+            result += len(set(group.replace('\n', '')))
+        end = time.time()
+        cls._print_results(6, 1, result, (end - start))
+
+    @classmethod
+    def _second_part(cls, data: List[str]):
+        data[len(data) -1] = data[len(data) -1][:-1] # Remove annoying trailing line break
+        start = time.time()
+        result = 0
+        for group in data:
+            result += len(set.intersection(*[set(a) for a in group.split('\n')]))
+
+        end = time.time()
+        cls._print_results(6, 2, result, (end - start))
+
+
 FirstPuzzle()
 SecondPuzzle()
 ThirdPuzzle()
 FourthPuzzle()
 FifthPuzzle()
+SixthPuzzle()
