@@ -4,6 +4,7 @@ from typing import Dict
 from typing import Tuple
 import time
 
+
 class Puzzle:
     _FILES = {
         1: 'puzzle1.txt',
@@ -11,7 +12,8 @@ class Puzzle:
         3: 'puzzle3.txt',
         4: 'puzzle4.txt',
         5: 'puzzle5.txt',
-        6: 'puzzle6.txt'
+        6: 'puzzle6.txt',
+        7: 'puzzle7.txt'
     }
 
     def __init__(self):
@@ -427,7 +429,7 @@ class SixthPuzzle(Puzzle):
 
     @classmethod
     def _second_part(cls, data: List[str]):
-        data[len(data) -1] = data[len(data) -1][:-1] # Remove annoying trailing line break
+        data[len(data) - 1] = data[len(data) - 1][:-1]  # Remove annoying trailing line break
         start = time.time()
         result = 0
         for group in data:
@@ -437,9 +439,87 @@ class SixthPuzzle(Puzzle):
         cls._print_results(6, 2, result, (end - start))
 
 
+class SeventhPuzzle(Puzzle):
+
+    @classmethod
+    def solve(cls):
+        data = cls._get_data_from_file(cls._FILES[7])
+        start = time.time()
+        serialized_data = []
+        for i in data:
+            if 'shiny gold' not in i[0]:
+                serialized_data.append([bag.replace('bags', '').replace('bag', '') for bag in
+                                        i.replace('.', '').replace(',', '').split(' bags contain ') if bag != ''])
+
+        cls._first_part(serialized_data, start)
+        cls._second_part(serialized_data, start)
+
+    @classmethod
+    def _first_part(cls, serialized_data, start: float):
+        # We now have our data structure prepared for building a corresponding tree
+
+        # Serialize the data so we can work with it as with tree structure
+        valid_bags = 0
+        clean_data = {}
+        for i in serialized_data:
+            new_stmts = []
+            for statement in i:
+                new_stmt = ''
+                for char in statement:
+                    if not char.isnumeric():
+                        new_stmt += char
+                    else:
+                        new_stmt += '*'
+                new_stmts.append([el.replace(' ', '') for el in new_stmt.split('*') if el != ''])
+
+            if len(new_stmts) != 2:
+                raise Exception('Our data structure is not formed right!')
+
+            clean_data[new_stmts[0][0]] = new_stmts[1]
+        # On initial step, we're going to find bags that eventually include our bag
+        all_bags = []
+        nodes_with_our_bag = ['shinygold']
+        while len(nodes_with_our_bag) > 0:
+            new_nodes = []
+            for bag in nodes_with_our_bag:
+                for node, children in clean_data.items():
+                    if bag in children:
+                        new_nodes.append(node)
+            nodes_with_our_bag = list(set(new_nodes))
+            all_bags += nodes_with_our_bag
+
+        end = time.time()
+        cls._print_results(7, 1, len(list(set(all_bags))), (end - start))
+
+    @classmethod
+    def _second_part(cls, serialized_data, start: float):
+        clean_data = {}
+        for line in serialized_data:
+            numbered_lines = line[1].replace('  ', ',').replace(' ', '').split(',')
+            if numbered_lines == ['noother']:
+                clean_data[line[0].replace(' ', '')] = None
+            else:
+                clean_data[line[0].replace(' ', '')] = {el[1::]: int(el[0]) for el in numbered_lines}
+        tree = clean_data['shinygold']
+        result = cls._traverse_tree(tree, clean_data)
+        end = time.time()
+        cls._print_results(7, 2, result, (end - start))
+
+    @classmethod
+    def _traverse_tree(cls, tree: Dict, clean_data: Dict):
+        result = 0
+        for node, amount in tree.items():
+            if clean_data[node] is not None:
+                result += amount + amount * cls._traverse_tree(clean_data[node], clean_data)
+            else:
+                result += amount
+        return result
+
+
 FirstPuzzle()
 SecondPuzzle()
 ThirdPuzzle()
 FourthPuzzle()
 FifthPuzzle()
 SixthPuzzle()
+SeventhPuzzle()
