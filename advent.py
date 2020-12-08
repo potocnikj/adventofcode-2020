@@ -3,6 +3,7 @@ from typing import List
 from typing import Dict
 from typing import Tuple
 import time
+import copy
 
 
 class Puzzle:
@@ -13,7 +14,8 @@ class Puzzle:
         4: 'puzzle4.txt',
         5: 'puzzle5.txt',
         6: 'puzzle6.txt',
-        7: 'puzzle7.txt'
+        7: 'puzzle7.txt',
+        8: 'puzzle8.txt'
     }
 
     def __init__(self):
@@ -516,6 +518,59 @@ class SeventhPuzzle(Puzzle):
         return result
 
 
+class EighthPuzzle(Puzzle):
+
+    @classmethod
+    def solve(cls):
+        data = [i.split() for i in cls._get_data_from_file(cls._FILES[8])]
+        cls._first_part(data)
+        cls._second_part(data)
+
+    @classmethod
+    def _first_part(cls, data: List[List[str]]):
+        start = time.time()
+        _, acc_value = cls._main_loop(data)
+        end = time.time()
+        cls._print_results(8, 1, acc_value, (end - start))
+
+    @classmethod
+    def _second_part(cls, data: List[List[str]]):
+        start = time.time()
+        acc_value = 0
+        for k in range(len(data) - 1):
+            instruction = data[k][0]
+            if instruction == 'acc':
+                continue
+            old_instruction = instruction
+            data[k][0] = {'jmp': 'nop', 'nop': 'jmp'}.get(instruction)
+            i, acc_value = cls._main_loop(data)
+            data[k][0] = old_instruction
+            if i == len(data):
+                break # In this case we've reached the end.
+        end = time.time()
+        cls._print_results(8, 2, acc_value, (end - start))
+
+
+    @classmethod
+    def _main_loop(cls, data) -> (int, int):
+        """ Executes a main loop and returns an index where it finished along with accumulator value """
+        i, acc_value, execution_dict = 0, 0, {i: False for i in range(len(data))}
+        while not execution_dict[i]:
+            instruction, sign, value = data[i][0], data[i][1][0], int(data[i][1][1::])
+            new_index = i + 1
+            value = value * -1 if sign == '-' else value * 1
+            if instruction == 'acc':
+                acc_value += value
+            elif instruction == 'jmp':
+                new_index = i + value
+            execution_dict[i] = True
+            i = new_index
+            if i >= len(data):
+                break
+
+        return i, acc_value
+
+
 FirstPuzzle()
 SecondPuzzle()
 ThirdPuzzle()
@@ -523,3 +578,4 @@ FourthPuzzle()
 FifthPuzzle()
 SixthPuzzle()
 SeventhPuzzle()
+EighthPuzzle()
