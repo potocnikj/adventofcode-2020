@@ -1,9 +1,8 @@
 import itertools
-from typing import List
-from typing import Dict
-from typing import Tuple
 import time
-import copy
+from typing import Dict
+from typing import List
+from typing import Tuple
 
 
 class Puzzle:
@@ -15,7 +14,8 @@ class Puzzle:
         5: 'puzzle5.txt',
         6: 'puzzle6.txt',
         7: 'puzzle7.txt',
-        8: 'puzzle8.txt'
+        8: 'puzzle8.txt',
+        9: 'puzzle9.txt'
     }
 
     def __init__(self):
@@ -23,6 +23,11 @@ class Puzzle:
 
     def solve(self):
         pass
+
+    @staticmethod
+    def print_cumulative_telemetry(time_spent: float):
+        print('[*] ' + 60 * '=')
+        print('[*] Together calculations took {0} s'.format(time_spent))
 
     @staticmethod
     def _get_data_from_file(file: str) -> List[str]:
@@ -48,8 +53,7 @@ class Puzzle:
         Prints results to console, takes puzzle and task number into account
         """
         duration = round(time_spent * 1000, 2)
-        print('[*] Task: {0} Part: {1} Result::: {2} Duration: {3} ms'.format(puzzle, task, result, duration)
-              )
+        print('[*] Task: {0} Part: {1} Result::: {2} Duration: {3} ms'.format(puzzle, task, result, duration))
 
 
 class FirstPuzzle(Puzzle):
@@ -546,10 +550,9 @@ class EighthPuzzle(Puzzle):
             i, acc_value = cls._main_loop(data)
             data[k][0] = old_instruction
             if i == len(data):
-                break # In this case we've reached the end.
+                break  # In this case we've reached the end.
         end = time.time()
         cls._print_results(8, 2, acc_value, (end - start))
-
 
     @classmethod
     def _main_loop(cls, data) -> (int, int):
@@ -571,6 +574,56 @@ class EighthPuzzle(Puzzle):
         return i, acc_value
 
 
+class NinthPuzzle(Puzzle):
+    _preamble_step: int = 25
+
+    @classmethod
+    def solve(cls):
+        data = [int(i) for i in cls._get_data_from_file(cls._FILES[9])]
+        cls._first_part(data)
+        cls._second_part(data)
+
+    @classmethod
+    def _first_part(cls, data: List[int]):
+        start = time.time()
+        result = cls._calculate_invalid_number(data)
+        end = time.time()
+        cls._print_results(9, 1, result, (end - start))
+
+    @classmethod
+    def _second_part(cls, data: List[int]):
+        start = time.time()
+        invalid_number = cls._calculate_invalid_number(data)
+        result = None
+        for i in range(len(data)):
+            contiguous_sum = 0
+            for j in range(i, len(data)):
+                contiguous_sum += data[j]
+                if contiguous_sum == invalid_number:
+                    result = (i, j)
+                    break
+            if result is not None:
+                break
+        end = time.time()
+        result_numbers = [data[i] for i in range(result[0], result[1] + 1)]
+        cls._print_results(9, 2, min(result_numbers) + max(result_numbers), (end - start))
+
+    @classmethod
+    def _calculate_invalid_number(cls, data: List[int]) -> int:
+        result = 0
+        for i in range(cls._preamble_step, len(data)):
+            pairs = list(itertools.combinations(data[i - cls._preamble_step: i], 2))
+            exists = False
+            for a, b in pairs:
+                if a + b == data[i]:
+                    exists = True
+            if not exists:
+                result = data[i]
+                break
+        return result
+
+
+start = time.time()
 FirstPuzzle()
 SecondPuzzle()
 ThirdPuzzle()
@@ -579,3 +632,6 @@ FifthPuzzle()
 SixthPuzzle()
 SeventhPuzzle()
 EighthPuzzle()
+NinthPuzzle()
+end = time.time()
+Puzzle.print_cumulative_telemetry(end - start)
